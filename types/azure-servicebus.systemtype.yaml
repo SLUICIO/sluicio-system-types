@@ -1,0 +1,44 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: azure-servicebus
+label: Azure Service Bus
+is_system: true
+detect_prefixes:
+    - servicebus.
+checks:
+    - name: Service Bus dead-lettered messages
+      description: Messages are landing in a queue's dead-letter sub-queue — processing is failing.
+      metric: servicebus.queue.deadletter_messages
+      agg: max
+      op: gt
+      split_by: queue
+      severity: warning
+      unit: msgs
+      display: true
+    - name: Service Bus dead-lettered messages (subscriptions)
+      description: Messages are landing in a topic subscription's dead-letter sub-queue.
+      metric: servicebus.topic.subscription.deadletter_messages
+      agg: max
+      op: gt
+      split_by: subscription
+      severity: warning
+      unit: msgs
+    - name: Service Bus queue backlog
+      description: Active (undelivered) messages are building up on a queue.
+      metric: servicebus.queue.active_messages
+      agg: max
+      op: gt
+      threshold: 5000
+      split_by: queue
+      severity: warning
+      unit: msgs
+      display: true
+    - name: Service Bus subscription backlog
+      description: Active messages are building up on a topic subscription.
+      metric: servicebus.topic.subscription.active_messages
+      agg: max
+      op: gt
+      threshold: 5000
+      split_by: subscription
+      severity: warning
+      unit: msgs

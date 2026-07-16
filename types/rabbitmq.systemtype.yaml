@@ -1,0 +1,57 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: rabbitmq
+label: RabbitMQ
+is_system: true
+detect_prefixes:
+    - rabbitmq
+checks:
+    - name: RabbitMQ memory alarm
+      description: Broker hit the memory watermark — publishers are blocked.
+      metric: rabbitmq_alarms_memory_used_watermark
+      agg: max
+      op: gt
+      severity: critical
+    - name: RabbitMQ disk alarm
+      description: Free disk dropped below the watermark.
+      metric: rabbitmq_alarms_free_disk_space_watermark
+      agg: max
+      op: gt
+      severity: critical
+    - name: RabbitMQ file-descriptor alarm
+      description: File-descriptor usage hit the limit.
+      metric: rabbitmq_alarms_file_descriptor_limit
+      agg: max
+      op: gt
+      severity: critical
+    - name: RabbitMQ queue backlog
+      description: Ready (undelivered) messages are building up.
+      metric: rabbitmq.message.current
+      agg: max
+      op: gt
+      threshold: 5000
+      attrs:
+        - key: state
+          op: eq
+          value: ready
+      severity: warning
+      unit: msgs
+      display: true
+    - name: RabbitMQ no consumers
+      description: A queue has no consumers attached.
+      metric: rabbitmq.consumer.count
+      agg: min
+      op: lt
+      threshold: 1
+      severity: warning
+      unit: consumers
+      display: true
+    - name: RabbitMQ low free disk
+      description: Node free disk is running low (< 2 GiB).
+      metric: rabbitmq.node.disk_free
+      agg: min
+      op: lt
+      threshold: 2.147483648e+09
+      severity: warning
+      unit: bytes
+      display: true

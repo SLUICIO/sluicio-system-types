@@ -1,0 +1,34 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: artemis
+label: ActiveMQ Artemis
+is_system: true
+detect_prefixes:
+    - artemis
+checks:
+    - name: Artemis queue backlog
+      description: Messages building up on an address/queue.
+      metric: artemis_message_count
+      agg: max
+      op: gt
+      threshold: 5000
+      severity: warning
+      unit: msgs
+      display: true
+    - name: Artemis no consumers
+      description: An address/queue has no consumers.
+      metric: artemis_consumer_count
+      agg: min
+      op: lt
+      threshold: 1
+      severity: warning
+      unit: consumers
+      display: true
+    - name: Artemis address memory
+      description: Address memory usage is high.
+      metric: artemis_address_memory_usage
+      agg: max
+      op: gt
+      severity: warning
+      unit: bytes
+      display: true

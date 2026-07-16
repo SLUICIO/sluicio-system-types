@@ -1,0 +1,43 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: dotnet-service
+label: .NET service
+is_system: false
+detect_prefixes:
+    - process.runtime.dotnet
+    - kestrel.
+    - aspnetcore.
+checks:
+    - name: .NET thread-pool backlog
+      description: Work is queuing on the thread pool — the app can't keep up.
+      metric: process.runtime.dotnet.thread_pool.queue.length
+      agg: max
+      op: gt
+      threshold: 200
+      severity: warning
+      unit: items
+      display: true
+    - name: Kestrel connections queued
+      description: Incoming connections are queuing — the web host is saturated.
+      metric: kestrel.queued_connections
+      agg: max
+      op: gt
+      threshold: 50
+      severity: warning
+      unit: connections
+      display: true
+    - name: .NET exception rate
+      description: Exceptions thrown are spiking (includes handled) — tune to your baseline.
+      metric: process.runtime.dotnet.exceptions.count
+      agg: increase
+      op: gt
+      threshold: 100
+      severity: warning
+      unit: exceptions
+      display: true
+    - name: .NET error logs spiking
+      description: Error-level logs are spiking — tune the threshold to your baseline.
+      signal: log
+      min_severity: 17
+      log_threshold: 25
+      severity: warning

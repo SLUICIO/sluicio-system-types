@@ -1,0 +1,61 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: otel-collector
+label: OpenTelemetry Collector
+is_system: false
+detect_prefixes:
+    - otelcol
+checks:
+    - name: Collector exporter queue backlog
+      description: Export queue is filling — the collector can't ship telemetry fast enough.
+      metric: otelcol_exporter_queue_size
+      agg: max
+      op: gt
+      threshold: 5000
+      severity: warning
+      unit: items
+      display: true
+    - name: Collector memory high
+      description: Collector resident memory is high.
+      metric: otelcol_process_memory_rss
+      agg: max
+      op: gt
+      threshold: 1.073741824e+09
+      severity: warning
+      unit: bytes
+      display: true
+    - name: Collector failing to export
+      description: Spans are failing to export — telemetry is being lost.
+      metric: otelcol_exporter_send_failed_spans
+      agg: increase
+      op: gt
+      severity: warning
+      unit: spans
+      display: true
+    - name: Collector dropping spans
+      description: The pipeline is dropping spans.
+      metric: otelcol_processor_dropped_spans
+      agg: increase
+      op: gt
+      severity: warning
+      unit: spans
+    - name: Collector enqueue failing
+      description: Items couldn't be enqueued for export (queue full / backpressure).
+      metric: otelcol_exporter_enqueue_failed_spans
+      agg: increase
+      op: gt
+      severity: warning
+      unit: spans
+    - name: Collector refusing spans
+      description: A receiver is refusing incoming spans (overload / bad data).
+      metric: otelcol_receiver_refused_spans
+      agg: increase
+      op: gt
+      severity: warning
+      unit: spans
+    - name: Collector errors logged
+      description: The collector logged error-level messages (config, auth, permanent-error failures).
+      signal: log
+      min_severity: 17
+      log_threshold: 1
+      severity: warning

@@ -1,0 +1,46 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: krakend
+label: KrakenD API Gateway
+is_system: true
+detect_prefixes:
+    - krakend.
+checks:
+    - name: KrakenD 5xx responses
+      description: The gateway returned server errors. Requires the 'Treat HTTP 5xx as errors' system setting — KrakenD records 5xx only as a span attribute, not as span status.
+      signal: trace_error
+      attrs:
+        - key: http.response.status_code
+          op: gte
+          value: "500"
+      trace_threshold: 1
+      window_seconds: 300
+      severity: warning
+    - name: KrakenD response time
+      description: p95 gateway latency is high — tune the threshold to your traffic.
+      signal: trace_latency
+      threshold_ms: 2000
+      window_seconds: 300
+      severity: warning
+      unit: ms
+    - name: KrakenD gateway silent
+      description: No traces at all in 15 minutes — the gateway (or its telemetry pipeline) is down. Disable if this gateway legitimately idles.
+      signal: trace_volume
+      trace_threshold: 1
+      window_seconds: 900
+      severity: warning
+    - name: KrakenD backend unreachable
+      description: Requests to a backend failed at the transport level (connection refused/reset) — the backend is down or unreachable, not merely erroring.
+      metric: http.client.request.failed.count
+      agg: increase
+      op: gt
+      severity: warning
+      unit: requests
+      display: true
+    - name: KrakenD backend timeouts
+      description: Backend calls exceeded the gateway's timeout budget — names the cause behind 500s and latency alerts.
+      metric: http.client.request.timedout.count
+      agg: increase
+      op: gt
+      severity: warning
+      unit: requests
