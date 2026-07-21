@@ -1,0 +1,34 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: nats
+label: NATS
+is_system: true
+detect_prefixes:
+    - gnatsd_
+    - nats_
+checks:
+    - name: NATS slow consumers
+      description: The server disconnected slow consumers — subscribers can't keep up and messages to them were dropped.
+      metric: gnatsd_varz_slow_consumers
+      agg: increase
+      op: gt
+      severity: warning
+      unit: consumers
+      display: true
+    - name: NATS no client connections
+      description: No clients are connected to the server.
+      metric: gnatsd_varz_connections
+      agg: min
+      op: lt
+      threshold: 1
+      severity: warning
+      unit: connections
+      display: true
+    - name: NATS memory high
+      description: Server resident memory is high (> 1 GiB) — tune to your deployment.
+      metric: gnatsd_varz_mem
+      agg: max
+      op: gt
+      threshold: 1.073741824e+09
+      severity: warning
+      unit: bytes

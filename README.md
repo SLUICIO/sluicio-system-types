@@ -60,6 +60,10 @@ The full format specification lives in the app repo:
 | Azure Service Bus | [`types/azure-servicebus.systemtype.yaml`](types/azure-servicebus.systemtype.yaml) | Per-queue/subscription depth and DLQ metrics |
 | OTel Collector | [`types/otel-collector.systemtype.yaml`](types/otel-collector.systemtype.yaml) | Pipeline throughput, refused/dropped telemetry |
 | .NET service | [`types/dotnet-service.systemtype.yaml`](types/dotnet-service.systemtype.yaml) | Runtime counters, error rates |
+| Apache Kafka | [`types/kafka.systemtype.yaml`](types/kafka.systemtype.yaml) | Consumer-group lag, empty groups, in-sync replicas, broker count |
+| Confluent Kafka | [`types/confluent-kafka.systemtype.yaml`](types/confluent-kafka.systemtype.yaml) | Consumer lag, cluster load, hot partitions (Confluent Cloud Metrics API) |
+| NATS | [`types/nats.systemtype.yaml`](types/nats.systemtype.yaml) | Slow consumers, client connections, server memory |
+| Debezium | [`types/debezium.systemtype.yaml`](types/debezium.systemtype.yaml) | Connector connectivity, CDC lag, event-queue capacity |
 
 These mirror the built-ins shipped with Sluicio, exported verbatim —
 fork away.

@@ -1,0 +1,32 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: debezium
+label: Debezium
+is_system: true
+detect_prefixes:
+    - debezium
+checks:
+    - name: Debezium disconnected
+      description: A connector lost its database connection — change capture has stopped.
+      metric: debezium_metrics_Connected
+      agg: min
+      op: lt
+      threshold: 1
+      severity: critical
+    - name: Debezium replication lag
+      description: Change capture is running more than 60s behind the source database.
+      metric: debezium_metrics_MilliSecondsBehindSource
+      agg: max
+      op: gt
+      threshold: 60000
+      severity: warning
+      unit: ms
+      display: true
+    - name: Debezium queue nearly full
+      description: The connector's internal event queue is nearly out of capacity — events aren't reaching Kafka fast enough.
+      metric: debezium_metrics_QueueRemainingCapacity
+      agg: min
+      op: lt
+      threshold: 100
+      severity: warning
+      unit: events

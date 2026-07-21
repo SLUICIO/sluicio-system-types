@@ -1,0 +1,44 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: kafka
+label: Apache Kafka
+is_system: true
+detect_prefixes:
+    - kafka.
+checks:
+    - name: Kafka consumer lag
+      description: A consumer group is falling behind the head of the log — messages are piling up faster than they're consumed.
+      metric: kafka.consumer_group.lag_sum
+      agg: max
+      op: gt
+      threshold: 1000
+      split_by: group
+      severity: warning
+      unit: msgs
+      display: true
+    - name: Kafka consumer group empty
+      description: A known consumer group has no members attached — nothing is consuming.
+      metric: kafka.consumer_group.members
+      agg: min
+      op: lt
+      threshold: 1
+      split_by: group
+      severity: warning
+      unit: consumers
+    - name: Kafka partition without in-sync replicas
+      description: A partition has zero in-sync replicas — it is unavailable for reliable writes.
+      metric: kafka.partition.replicas_in_sync
+      agg: min
+      op: lt
+      threshold: 1
+      severity: critical
+      unit: replicas
+    - name: Kafka brokers visible
+      description: Broker count as seen by the metrics receiver — raise the threshold to your cluster size so a lost broker fires.
+      metric: kafka.brokers
+      agg: min
+      op: lt
+      threshold: 1
+      severity: warning
+      unit: brokers
+      display: true

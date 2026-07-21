@@ -1,0 +1,33 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: confluent-kafka
+label: Confluent Kafka
+is_system: true
+detect_prefixes:
+    - confluent_kafka_
+    - confluent.kafka.
+checks:
+    - name: Confluent consumer lag
+      description: A consumer group is falling behind — lag in offsets between group members and the latest offset.
+      metric: confluent_kafka_server_consumer_lag_offsets
+      agg: max
+      op: gt
+      threshold: 1000
+      split_by: consumer_group_id
+      severity: warning
+      unit: offsets
+      display: true
+    - name: Confluent cluster load high
+      description: Cluster load is above 80% — throttling and latency follow. (Dedicated clusters report this; ratio 0–1.)
+      metric: confluent_kafka_server_cluster_load_percent
+      agg: max
+      op: gt
+      threshold: 0.8
+      severity: warning
+      display: true
+    - name: Confluent hot partition (ingress)
+      description: A partition is receiving disproportionate produce traffic — a hot key or skewed partitioner.
+      metric: confluent_kafka_server_hot_partition_ingress
+      agg: max
+      op: gt
+      severity: warning
