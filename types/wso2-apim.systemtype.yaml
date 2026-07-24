@@ -1,0 +1,55 @@
+# Sluicio system type — import via System types → Import, or share it.
+#
+# WSO2 API Manager's native OpenTelemetry support is tracing only
+# ([apim.open_telemetry] in deployment.toml, OTLP remote tracer), so the
+# core checks are trace signals. If gateway faults surface only as a 5xx
+# status-code attribute (not span status), enable the cell setting
+# "Treat HTTP 5xx as errors". The JVM heap check needs JVM metrics (e.g.
+# the OTel Java agent's stable-semconv jvm.memory.used) and assumes a
+# 2 GiB max heap — tune to your -Xmx. Thresholds are starting points.
+format: sluicio/system-type/v1
+key: wso2-apim
+label: WSO2 API Manager
+is_system: true
+detect_prefixes:
+    - wso2
+    - org_wso2
+checks:
+    - name: WSO2 API-M failed API invocations
+      description: API invocations through the gateway are failing. If faults surface only as a 5xx status-code attribute (not span status), enable the 'Treat HTTP 5xx as errors' system setting.
+      signal: trace_error
+      trace_threshold: 1
+      window_seconds: 300
+      severity: warning
+    - name: WSO2 API-M response time
+      description: p95 gateway latency is high — tune the threshold to your traffic.
+      signal: trace_latency
+      threshold_ms: 2000
+      window_seconds: 300
+      severity: warning
+      unit: ms
+    - name: WSO2 API-M gateway silent
+      description: No traces at all in 15 minutes — the gateway (or its telemetry pipeline) is down. Disable if this gateway legitimately idles.
+      signal: trace_volume
+      trace_threshold: 1
+      window_seconds: 900
+      severity: warning
+    - name: WSO2 API-M error logs spiking
+      description: Error-level entries in wso2carbon.log are spiking — tune the threshold to your baseline.
+      signal: log
+      min_severity: 17
+      log_threshold: 10
+      severity: warning
+    - name: WSO2 API-M JVM heap high
+      description: JVM heap usage is high (> 1.5 GiB, assumes a 2 GiB max heap) — tune to your -Xmx. Needs JVM metrics (e.g. the OTel Java agent).
+      metric: jvm.memory.used
+      agg: max
+      op: gt
+      threshold: 1610612736
+      attrs:
+        - key: jvm.memory.type
+          op: eq
+          value: heap
+      severity: warning
+      unit: bytes
+      display: true

@@ -64,6 +64,7 @@ The full format specification lives in the app repo:
 | Confluent Kafka | [`types/confluent-kafka.systemtype.yaml`](types/confluent-kafka.systemtype.yaml) | Consumer lag, cluster load, hot partitions (Confluent Cloud Metrics API) |
 | NATS | [`types/nats.systemtype.yaml`](types/nats.systemtype.yaml) | Slow consumers, client connections, server memory |
 | Debezium | [`types/debezium.systemtype.yaml`](types/debezium.systemtype.yaml) | Connector connectivity, CDC lag, event-queue capacity |
+| WSO2 API Manager | [`types/wso2-apim.systemtype.yaml`](types/wso2-apim.systemtype.yaml) | Failed/slow/silent gateway traces, error-log spikes, JVM heap |
 
 These mirror the built-ins shipped with Sluicio, exported verbatim —
 fork away.
