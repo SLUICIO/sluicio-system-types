@@ -1,12 +1,4 @@
 # Sluicio system type — import via System types → Import, or share it.
-#
-# WSO2 API Manager's native OpenTelemetry support is tracing only
-# ([apim.open_telemetry] in deployment.toml, OTLP remote tracer), so the
-# core checks are trace signals. If gateway faults surface only as a 5xx
-# status-code attribute (not span status), enable the cell setting
-# "Treat HTTP 5xx as errors". The JVM heap check needs JVM metrics (e.g.
-# the OTel Java agent's stable-semconv jvm.memory.used) and assumes a
-# 2 GiB max heap — tune to your -Xmx. Thresholds are starting points.
 format: sluicio/system-type/v1
 key: wso2-apim
 label: WSO2 API Manager
@@ -45,7 +37,7 @@ checks:
       metric: jvm.memory.used
       agg: max
       op: gt
-      threshold: 1610612736
+      threshold: 1.610612736e+09
       attrs:
         - key: jvm.memory.type
           op: eq
