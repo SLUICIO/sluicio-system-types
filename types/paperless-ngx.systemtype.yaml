@@ -1,16 +1,16 @@
-# Sluicio system type — import via System types → Import, or share it.
+# Sluicio system type - import via System types → Import, or share it.
 #
 # Two prerequisites, or half these checks never evaluate:
 #
 #   1. paperless_task_status must have its `id` label aggregated away in the
 #      Collector (metricstransform, aggregate_labels [status], sum). Raw, it
-#      is one series per task id — unbounded, and not a count of anything.
+#      is one series per task id - unbounded, and not a count of anything.
 #      Do NOT substitute paperless_task_status_info: that is a label registry
 #      the exporter sets to 1 per status string it has seen, so every series
 #      reads 1 forever.
 #   2. The Celery worker must not recycle its pool children. Paperless
 #      hardcodes worker_max_tasks_per_child = 1, so each child is killed
-#      the moment its task returns — while the span processor still holds
+#      the moment its task returns - while the span processor still holds
 #      that task's spans. They die with the child, silently, and the trace
 #      checks go permanently quiet while ingest looks fine. Paperless does
 #      not expose the setting: use --pool solo, which has no children to
@@ -18,7 +18,7 @@
 #
 # Metrics come from github.com/hansmi/prometheus-paperless-exporter (REST
 # API, least-privilege view permissions). Traces come from Python
-# auto-instrumentation on the published image — paperless-ngx ships neither
+# auto-instrumentation on the published image - paperless-ngx ships neither
 # natively. Recipe: github.com/syron/paperless-ngx-otel
 format: sluicio/system-type/v1
 key: paperless-ngx
@@ -28,7 +28,7 @@ detect_prefixes:
     - paperless_
 checks:
     - name: Document ingest failed
-      description: A document failed to consume — parser error, unreadable file, or a plugin raising. The trace names the document and the stage.
+      description: A document failed to consume - parser error, unreadable file, or a plugin raising. The trace names the document and the stage.
       signal: trace_error
       trace_threshold: 1
       window_seconds: 900
@@ -46,14 +46,14 @@ checks:
       severity: warning
       unit: tasks
     - name: Slow document ingest
-      description: p95 consume time is high. OCR dominates this — raise the threshold if you routinely ingest large scanned PDFs.
+      description: p95 consume time is high. OCR dominates this - raise the threshold if you routinely ingest large scanned PDFs.
       signal: trace_latency
       threshold_ms: 60000
       window_seconds: 900
       severity: warning
       unit: ms
     - name: Ingest backlog
-      description: Consume tasks are queued and not draining — the worker is wedged, or intake is outrunning OCR.
+      description: Consume tasks are queued and not draining - the worker is wedged, or intake is outrunning OCR.
       metric: paperless_task_status
       agg: last
       op: gt
@@ -66,7 +66,7 @@ checks:
       unit: tasks
       display: true
     - name: Documents unfiled
-      description: Documents consumed successfully but still sitting in the inbox. A business backlog, not a fault — tune to your filing habits or disable.
+      description: Documents consumed successfully but still sitting in the inbox. A business backlog, not a fault - tune to your filing habits or disable.
       metric: paperless_statistics_documents_inbox_count
       agg: last
       op: gt
@@ -75,7 +75,7 @@ checks:
       unit: documents
       display: true
     - name: Celery worker unhealthy
-      description: Paperless reports its task worker as down — nothing will consume, and no trace will be emitted to tell you so.
+      description: Paperless reports its task worker as down - nothing will consume, and no trace will be emitted to tell you so.
       metric: paperless_status_celery_status
       agg: last
       op: lt
@@ -96,7 +96,7 @@ checks:
       threshold: 1
       severity: critical
     - name: Unapplied migrations
-      description: The image was upgraded but migrations have not run — a half-upgraded instance.
+      description: The image was upgraded but migrations have not run - a half-upgraded instance.
       metric: paperless_status_database_unapplied_migrations
       agg: max
       op: gt
@@ -112,7 +112,7 @@ checks:
       unit: bytes
       display: true
     - name: Classifier stale
-      description: The document classifier has not retrained in over a week — auto-tagging quality drifts silently, with no failure anywhere.
+      description: The document classifier has not retrained in over a week - auto-tagging quality drifts silently, with no failure anywhere.
       metric: paperless_status_classifier_last_trained_timestamp_seconds
       agg: age
       op: gt
