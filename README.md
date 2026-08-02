@@ -58,6 +58,7 @@ The full format specification lives in the app repo:
 | ActiveMQ Artemis | [`types/artemis.systemtype.yaml`](types/artemis.systemtype.yaml) | Address/queue metrics, broker health |
 | KrakenD | [`types/krakend.systemtype.yaml`](types/krakend.systemtype.yaml) | Gateway 5xx/error traces, backend transport failures & timeouts |
 | Azure Service Bus | [`types/azure-servicebus.systemtype.yaml`](types/azure-servicebus.systemtype.yaml) | Per-queue/subscription depth and DLQ metrics |
+| Paperless-ngx | [`types/paperless-ngx.systemtype.yaml`](types/paperless-ngx.systemtype.yaml) | Document ingest failures/latency, queue backlog, unfiled documents, component health, storage |
 | OTel Collector | [`types/otel-collector.systemtype.yaml`](types/otel-collector.systemtype.yaml) | Pipeline throughput, refused/dropped telemetry |
 | .NET service | [`types/dotnet-service.systemtype.yaml`](types/dotnet-service.systemtype.yaml) | Runtime counters, error rates |
 | Apache Kafka | [`types/kafka.systemtype.yaml`](types/kafka.systemtype.yaml) | Consumer-group lag, empty groups, in-sync replicas, broker count |

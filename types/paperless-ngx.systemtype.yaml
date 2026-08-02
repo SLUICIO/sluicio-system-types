@@ -1,0 +1,117 @@
+# Sluicio system type — import via System types → Import, or share it.
+#
+# Two prerequisites, or half these checks never evaluate:
+#
+#   1. paperless_task_status must have its `id` label aggregated away in the
+#      Collector (metricstransform, aggregate_labels [status], sum). Raw, it
+#      is one series per task id — unbounded, and not a count of anything.
+#      Do NOT substitute paperless_task_status_info: that is a label registry
+#      the exporter sets to 1 per status string it has seen, so every series
+#      reads 1 forever.
+#   2. The Celery worker must not run the default prefork pool. Prefork
+#      children export no telemetry, so the trace checks go permanently
+#      silent while ingest looks fine. Use --pool solo or --pool threads.
+#
+# Metrics come from github.com/hansmi/prometheus-paperless-exporter (REST
+# API, least-privilege view permissions). Traces come from Python
+# auto-instrumentation on the published image — paperless-ngx ships neither
+# natively. Recipe: github.com/syron/paperless-ngx-otel
+format: sluicio/system-type/v1
+key: paperless-ngx
+label: Paperless-ngx
+is_system: true
+detect_prefixes:
+    - paperless_
+checks:
+    - name: Document ingest failed
+      description: A document failed to consume — parser error, unreadable file, or a plugin raising. The trace names the document and the stage.
+      signal: trace_error
+      trace_threshold: 1
+      window_seconds: 900
+      severity: warning
+    - name: New ingest failures
+      description: 'Failed consume tasks recorded by paperless in the window. Overlaps the trace check on purpose: this one still fires if the worker''s telemetry pipeline is down.'
+      metric: paperless_task_status
+      agg: increase
+      op: gt
+      threshold: 0
+      attrs:
+        - key: status
+          op: eq
+          value: failure
+      severity: warning
+      unit: tasks
+    - name: Slow document ingest
+      description: p95 consume time is high. OCR dominates this — raise the threshold if you routinely ingest large scanned PDFs.
+      signal: trace_latency
+      threshold_ms: 60000
+      window_seconds: 900
+      severity: warning
+      unit: ms
+    - name: Ingest backlog
+      description: Consume tasks are queued and not draining — the worker is wedged, or intake is outrunning OCR.
+      metric: paperless_task_status
+      agg: last
+      op: gt
+      threshold: 25
+      attrs:
+        - key: status
+          op: eq
+          value: pending
+      severity: warning
+      unit: tasks
+      display: true
+    - name: Documents unfiled
+      description: Documents consumed successfully but still sitting in the inbox. A business backlog, not a fault — tune to your filing habits or disable.
+      metric: paperless_statistics_documents_inbox_count
+      agg: last
+      op: gt
+      threshold: 100
+      severity: warning
+      unit: documents
+      display: true
+    - name: Celery worker unhealthy
+      description: Paperless reports its task worker as down — nothing will consume, and no trace will be emitted to tell you so.
+      metric: paperless_status_celery_status
+      agg: last
+      op: lt
+      threshold: 1
+      severity: critical
+    - name: Redis unhealthy
+      description: The broker paperless queues through is unreachable.
+      metric: paperless_status_redis_status
+      agg: last
+      op: lt
+      threshold: 1
+      severity: critical
+    - name: Database unhealthy
+      description: Paperless cannot reach its database.
+      metric: paperless_status_database_status
+      agg: last
+      op: lt
+      threshold: 1
+      severity: critical
+    - name: Unapplied migrations
+      description: The image was upgraded but migrations have not run — a half-upgraded instance.
+      metric: paperless_status_database_unapplied_migrations
+      agg: max
+      op: gt
+      threshold: 0
+      severity: warning
+    - name: Low document storage
+      description: Less than 2 GiB free where documents are stored. Paperless fails ingest hard when this runs out.
+      metric: paperless_status_storage_available_bytes
+      agg: min
+      op: lt
+      threshold: 2147483648
+      severity: warning
+      unit: bytes
+      display: true
+    - name: Classifier stale
+      description: The document classifier has not retrained in over a week — auto-tagging quality drifts silently, with no failure anywhere.
+      metric: paperless_status_classifier_last_trained_timestamp_seconds
+      agg: age
+      op: gt
+      threshold: 604800
+      severity: warning
+      unit: seconds
