@@ -8,9 +8,13 @@
 #      Do NOT substitute paperless_task_status_info: that is a label registry
 #      the exporter sets to 1 per status string it has seen, so every series
 #      reads 1 forever.
-#   2. The Celery worker must not run the default prefork pool. Prefork
-#      children export no telemetry, so the trace checks go permanently
-#      silent while ingest looks fine. Use --pool solo or --pool threads.
+#   2. The Celery worker must not recycle its pool children. Paperless
+#      hardcodes worker_max_tasks_per_child = 1, so each child is killed
+#      the moment its task returns — while the span processor still holds
+#      that task's spans. They die with the child, silently, and the trace
+#      checks go permanently quiet while ingest looks fine. Paperless does
+#      not expose the setting: use --pool solo, which has no children to
+#      recycle.
 #
 # Metrics come from github.com/hansmi/prometheus-paperless-exporter (REST
 # API, least-privilege view permissions). Traces come from Python
