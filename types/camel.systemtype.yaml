@@ -1,0 +1,67 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: camel
+label: Apache Camel
+is_system: false
+detect_prefixes:
+    - camel.
+    - camel_
+checks:
+    - name: Route failing
+      description: Exchanges failed on a route without being handled by an error handler. The split names which route, not just which JVM.
+      metric: camel.exchanges.failed
+      agg: increase
+      op: gt
+      split_by: routeId
+      severity: warning
+      unit: exchanges
+      display: true
+    - name: Route dead-lettering
+      description: Failures are being caught and handled - a dead-letter channel doing its job, which is a silent failure if nobody reads that queue. Raise or disable this if dead-lettering is your designed path.
+      metric: camel.exchanges.failures.handled
+      agg: increase
+      op: gt
+      threshold: 10
+      split_by: routeId
+      severity: warning
+      unit: exchanges
+    - name: Route backlog
+      description: Exchanges are piling up in flight on a route - it is wedged, or intake is outrunning it. Tune to the concurrency the route is built for.
+      metric: camel.exchanges.inflight
+      agg: max
+      op: gt
+      threshold: 100
+      split_by: routeId
+      severity: warning
+      unit: exchanges
+      display: true
+    - name: Routes stopped
+      description: Running routes dropped to zero. Raise the threshold to your route count so losing ONE route fires, rather than only the context going down entirely.
+      metric: camel.routes.running
+      agg: min
+      op: lt
+      threshold: 1
+      severity: critical
+      unit: routes
+      display: true
+    - name: Broker redelivering to a route
+      description: An external broker is redelivering messages to this route - the consumer keeps rejecting them, which ends in a dead-letter queue rather than a visible error.
+      metric: camel.exchanges.external.redeliveries
+      agg: increase
+      op: gt
+      split_by: routeId
+      severity: warning
+      unit: redeliveries
+    - name: Exchange failed
+      description: 'A failed exchange, from the trace rather than the counter: it names the endpoint and the step, which the metric cannot. Needs camel-opentelemetry.'
+      signal: trace_error
+      trace_threshold: 1
+      window_seconds: 900
+      severity: warning
+    - name: Slow exchanges
+      description: p95 exchange duration is high. Tune to the route's own shape - a file poll and an HTTP call do not belong to the same threshold.
+      signal: trace_latency
+      threshold_ms: 30000
+      window_seconds: 900
+      severity: warning
+      unit: ms
