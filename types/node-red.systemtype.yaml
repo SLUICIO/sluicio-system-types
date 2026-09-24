@@ -1,0 +1,38 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: node-red
+label: Node-RED
+is_system: false
+detect_prefixes: []
+detect_span_attrs:
+    - node_red.
+checks:
+    - name: Flow failed
+      description: A flow execution failed. Alert per flow by making each flow an integration matched on node_red.flow.id - this one covers the runtime as a whole.
+      signal: trace_error
+      trace_threshold: 1
+      window_seconds: 900
+      severity: warning
+    - name: Flow execution did not complete
+      description: 'A span was left open: the run neither finished nor raised. Calling msg.error() routes to a catch node WITHOUT marking the trace failed, so the failed-flow check above cannot see it and this is the only evidence there is.'
+      signal: trace_attribute
+      attrs:
+        - key: node_red.span.incomplete
+          op: eq
+          value: "true"
+      trace_threshold: 1
+      window_seconds: 900
+      severity: warning
+    - name: Slow flows
+      description: p95 flow duration is high across the runtime. Tune per flow by scoping it to an integration - a file poll and an HTTP call do not share a threshold.
+      signal: trace_latency
+      threshold_ms: 30000
+      window_seconds: 900
+      severity: warning
+      unit: ms
+    - name: Runtime went quiet
+      description: The runtime produced fewer than one flow execution in an hour. Node-RED fails silently well - the editor stays green while nothing runs. Disable this on a runtime that only runs on a schedule, where quiet is the normal state.
+      signal: trace_volume
+      trace_threshold: 1
+      window_seconds: 3600
+      severity: warning
