@@ -1,0 +1,71 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: kubernetes
+label: Kubernetes
+is_system: true
+detect_prefixes:
+    - k8s.
+checks:
+    - name: Node not ready
+      description: A node is NotReady or unreachable - its pods are being evicted or are already gone. Needs the k8s_cluster receiver.
+      metric: k8s.node.condition_ready
+      agg: min
+      op: lt
+      threshold: 1
+      split_by: k8s.node.name
+      severity: critical
+    - name: Deployment has no available replicas
+      description: Every replica of a deployment is unavailable - that workload is down, not degraded. Raise the threshold to your replica count to catch partial loss too.
+      metric: k8s.deployment.available
+      agg: min
+      op: lt
+      threshold: 1
+      split_by: k8s.deployment.name
+      severity: critical
+      unit: replicas
+    - name: Container restart loop
+      description: Containers restarted repeatedly in the window - CrashLoopBackOff, an OOM kill, or a failing probe. Counts restarts that happened, not the lifetime total.
+      metric: k8s.container.restarts
+      agg: increase
+      op: gt
+      threshold: 3
+      split_by: k8s.container.name
+      severity: warning
+      unit: restarts
+      display: true
+    - name: Pod failed
+      description: A pod is in Failed or Unknown phase. Phase is an enum (1 Pending, 2 Running, 3 Succeeded, 4 Failed, 5 Unknown), so the threshold is the enum value, not a count.
+      metric: k8s.pod.phase
+      agg: max
+      op: gte
+      threshold: 4
+      split_by: k8s.pod.name
+      severity: warning
+    - name: Job failing
+      description: A Job has failed pods. Worth watching on a cluster that runs scheduled integration work - a nightly export that dies leaves nothing else behind to notice it.
+      metric: k8s.job.failed_pods
+      agg: max
+      op: gt
+      split_by: k8s.job.name
+      severity: warning
+      unit: pods
+      display: true
+    - name: DaemonSet not running anywhere
+      description: A DaemonSet is ready on no node at all. Often the log or metric agent itself, which is how a cluster goes quiet without anything reporting that it did.
+      metric: k8s.daemonset.ready_nodes
+      agg: min
+      op: lt
+      threshold: 1
+      split_by: k8s.daemonset.name
+      severity: warning
+      unit: nodes
+    - name: Node disk nearly full
+      description: Less than 2 GiB free on a node filesystem - the kubelet starts evicting pods under disk pressure. Tune to your node size. Needs the kubelet_stats receiver.
+      metric: k8s.node.filesystem.available
+      agg: min
+      op: lt
+      threshold: 2.147483648e+09
+      split_by: k8s.node.name
+      severity: warning
+      unit: bytes
+      display: true
