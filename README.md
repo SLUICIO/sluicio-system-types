@@ -66,7 +66,8 @@ The full format specification lives in the app repo:
 | NATS | [`types/nats.systemtype.yaml`](types/nats.systemtype.yaml) | Slow consumers, client connections, server memory |
 | Debezium | [`types/debezium.systemtype.yaml`](types/debezium.systemtype.yaml) | Connector connectivity, CDC lag, event-queue capacity |
 | Kubernetes | [`types/kubernetes.systemtype.yaml`](types/kubernetes.systemtype.yaml) | Node readiness, deployment availability, restart loops, failed pods and Jobs, node disk (k0s, k3s, RKE2, MicroK8s, kubeadm, EKS, AKS, GKE, OpenShift) |
+| Apache Airflow | [`types/airflow.systemtype.yaml`](types/airflow.systemtype.yaml) | Platform only: scheduler/triggerer/DAG-processor heartbeats, DAG import errors, pool starvation, executor saturation, blocked triggerer. Per-DAG checks belong on integrations - see the file header |
 | WSO2 API Manager | [`types/wso2-apim.systemtype.yaml`](types/wso2-apim.systemtype.yaml) | Failed invocations, gateway latency, dead-man, error logs, JVM heap |
 
-These mirror the built-ins shipped with Sluicio, exported verbatim —
-fork away.
+Most of these mirror the built-ins shipped with Sluicio, exported verbatim -
+fork away. Apache Airflow is not a built-in; import it from here.

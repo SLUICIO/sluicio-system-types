@@ -1,0 +1,106 @@
+# Sluicio system type - import via System types → Import, or share it.
+#
+# Apache Airflow 3.x with native OpenTelemetry metrics ([metrics] otel_on).
+# Tested against Airflow 3.3.2, LocalExecutor. Recipe and measurements:
+# github.com/syron/airflow-otel
+#
+# This type watches the PLATFORM - the scheduler, triggerer, DAG processor and
+# their capacity - and nothing that belongs to a single DAG. That is on
+# purpose. A system type's checks are applied to every member service, and
+# every DAG runs inside the same services (airflow-scheduler, -apiserver,
+# -triggerer). A "DAG run failed" check here would fire on airflow-scheduler,
+# and every integration containing that service - every DAG - would go
+# unhealthy when any one DAG failed. Measured, not guessed.
+#
+# Model each DAG as an INTEGRATION instead - one match group:
+#   service.name   prefix  airflow-
+#   airflow.dag_id equals  <dag_id>      (include descendants: on)
+# and bind the per-DAG checks to that integration:
+#   - failed trace, threshold 1: the DAG run failed
+#   - trace attribute airflow.task_instance.state = up_for_retry: a task
+#     needed a retry, although the run may have succeeded
+#   - trace latency on the run
+# The failed-trace check only means "the run failed" with the worker-span
+# listener from the recipe, plus its collector filter for Airflow's per-try
+# task_run spans. Without them, a run that a retry rescued still counts as
+# failed.
+#
+# Prerequisite: [metrics] legacy_names_on = False. Its default also sends
+# every metric under a name with dag_id/task_id baked in - unbounded metric
+# names. The checks below use the tagged names.
+#
+# Heartbeat checks catch a WEDGED component - alive, still exporting, no
+# longer beating. A component that has died stops exporting the series, and
+# a check with no data does not fire. For a crashed process, add a no-data
+# check on the rule, or watch the process from outside.
+#
+# Not here yet: duration/delay checks. Airflow emits every timing
+# (airflow.task.duration, airflow.dagrun.duration.*, airflow.dagrun.
+# schedule_delay) as an exponential histogram.
+format: sluicio/system-type/v1
+key: airflow
+label: Apache Airflow
+is_system: true
+detect_prefixes:
+    - airflow.
+checks:
+    - name: Scheduler not heartbeating
+      description: The scheduler is exporting but has stopped heartbeating - wedged. Nothing gets scheduled or run, and no trace will say so.
+      metric: airflow.scheduler_heartbeat
+      agg: increase
+      op: lt
+      threshold: 1
+      severity: critical
+      unit: heartbeats
+    - name: Triggerer not heartbeating
+      description: The triggerer has stopped heartbeating. Deferred tasks (async sensors, deferrable operators) wait forever.
+      metric: airflow.triggerer_heartbeat
+      agg: increase
+      op: lt
+      threshold: 1
+      severity: critical
+      unit: heartbeats
+    - name: DAG processor not heartbeating
+      description: The DAG processor has stopped heartbeating. Edits to DAG files stop reaching the scheduler; DAGs keep running on their last parsed version.
+      metric: airflow.dag_processor_heartbeat
+      agg: increase
+      op: lt
+      threshold: 1
+      severity: warning
+      unit: heartbeats
+    - name: DAG import errors
+      description: A DAG file fails to parse. Its DAG disappears from the scheduler - it does not fail, it just stops running and emits nothing, so no integration check will notice.
+      metric: airflow.dag_processing.import_errors
+      agg: max
+      op: gt
+      threshold: 0
+      severity: warning
+      unit: files
+      display: true
+    - name: Tasks starving for pool slots
+      description: Tasks are ready to run but their pool has no free slot. Work queues up behind a too-small pool or a long-running task.
+      metric: airflow.pool.starving_tasks
+      agg: max
+      op: gt
+      threshold: 0
+      split_by: pool_name
+      severity: warning
+      unit: tasks
+      display: true
+    - name: Executor saturated
+      description: The executor has no open slots - every parallelism slot is busy, and new tasks wait.
+      metric: airflow.executor.open_slots
+      agg: min
+      op: lt
+      threshold: 1
+      severity: warning
+      unit: slots
+      display: true
+    - name: Trigger blocking the triggerer
+      description: A trigger ran blocking code on the triggerer's event loop, stalling every other deferred task on that triggerer.
+      metric: airflow.triggers.blocked_main_thread
+      agg: increase
+      op: gt
+      threshold: 0
+      severity: warning
+      unit: triggers
