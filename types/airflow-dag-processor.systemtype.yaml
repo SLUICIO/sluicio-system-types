@@ -1,0 +1,53 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: airflow-dag-processor
+label: Airflow DAG processor
+is_system: false
+detect_prefixes:
+    - airflow.dag_processing.
+    - airflow.dagbag_size
+    - airflow.dag_processor_heartbeat
+checks:
+    - name: DAG processor not running
+      description: 'The heartbeat stopped, so no DAG file is being reparsed: edits never take effect and a new DAG never appears. Fires on the absence of the metric, because a dead process emits nothing left to threshold.'
+      metric: airflow.dag_processor_heartbeat
+      agg: increase
+      op: lt
+      threshold: 1
+      fire_on_no_data: true
+      severity: critical
+      display: true
+    - name: DAG import errors
+      description: 'A DAG file fails to import. That DAG is not scheduled at all, and it fails nowhere: no task errors, no failed run, nothing on the scheduler. Scheduled work vanishes quietly.'
+      metric: airflow.dag_processing.import_errors
+      agg: max
+      op: gt
+      severity: critical
+      unit: files
+      display: true
+    - name: No DAGs loaded
+      description: The DAG bag is empty - a bundle that failed to sync, or a path that moved. Raise the threshold to your DAG count to catch losing SOME of them rather than all.
+      metric: airflow.dagbag_size
+      agg: min
+      op: lt
+      threshold: 1
+      severity: critical
+      unit: dags
+    - name: DAG file not reparsed
+      description: A file has not been reparsed recently, so edits to it are not live. The value is seconds since its last parse, split by file so the firing names it.
+      metric: airflow.dag_processing.last_run.seconds_ago
+      agg: max
+      op: gt
+      threshold: 600
+      split_by: file_name
+      severity: warning
+      unit: seconds
+    - name: DAG parsing slow
+      description: Total parse time is high, which delays every schedule. Usually one file doing real work at import time - an API call or a database query at module level. Tune to your DAG count.
+      metric: airflow.dag_processing.total_parse_time
+      agg: max
+      op: gt
+      threshold: 30
+      severity: warning
+      unit: seconds
+      display: true

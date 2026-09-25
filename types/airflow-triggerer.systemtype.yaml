@@ -1,0 +1,35 @@
+# Sluicio system type — import via System types → Import, or share it.
+format: sluicio/system-type/v1
+key: airflow-triggerer
+label: Airflow triggerer
+is_system: false
+detect_prefixes:
+    - airflow.triggers.
+    - airflow.triggerer
+checks:
+    - name: Triggerer not running
+      description: 'The heartbeat stopped. Every deferred task stays deferred: not running, not failing, indistinguishable from waiting correctly. Fires on the absence of the metric.'
+      metric: airflow.triggerer_heartbeat
+      agg: increase
+      op: lt
+      threshold: 1
+      fire_on_no_data: true
+      severity: critical
+      display: true
+    - name: Trigger blocking the main thread
+      description: A trigger blocked the async loop. One badly written trigger doing synchronous work starves every other deferred task on this process, so the symptom is unrelated tasks hanging.
+      metric: airflow.triggers.blocked_main_thread
+      agg: increase
+      op: gt
+      severity: warning
+      unit: triggers
+      display: true
+    - name: Triggerer at capacity
+      description: No capacity left for new deferred tasks, so they queue behind the ones running. Scale the triggerer or raise its capacity.
+      metric: airflow.triggerer.capacity_left
+      agg: min
+      op: lt
+      threshold: 1
+      severity: warning
+      unit: slots
+      display: true

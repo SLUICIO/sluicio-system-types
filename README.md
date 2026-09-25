@@ -68,6 +68,9 @@ The full format specification lives in the app repo:
 | Kubernetes | [`types/kubernetes.systemtype.yaml`](types/kubernetes.systemtype.yaml) | Node readiness, deployment availability, restart loops, failed pods and Jobs, node disk (k0s, k3s, RKE2, MicroK8s, kubeadm, EKS, AKS, GKE, OpenShift) |
 | Apache Camel | [`types/camel.systemtype.yaml`](types/camel.systemtype.yaml) | Per-route failures, dead-lettering, in-flight backlog, stopped routes, broker redeliveries, failed and slow exchanges |
 | Node-RED | [`types/node-red.systemtype.yaml`](types/node-red.systemtype.yaml) | Failed and incomplete flow executions, slow flows, a runtime gone quiet. Detected from `node_red.` SPAN ATTRIBUTES, not metric names |
+| Apache Airflow | [`types/airflow.systemtype.yaml`](types/airflow.systemtype.yaml) | The SCHEDULER: per-DAG task and operator failures, a stopped scheduler, pool starvation, executor saturation |
+| Airflow DAG processor | [`types/airflow-dag-processor.systemtype.yaml`](types/airflow-dag-processor.systemtype.yaml) | DAG import errors, a stopped processor, an empty DAG bag, stale or slow parsing |
+| Airflow triggerer | [`types/airflow-triggerer.systemtype.yaml`](types/airflow-triggerer.systemtype.yaml) | A stopped triggerer, a trigger blocking the async loop, capacity |
 | Apache Airflow | [`types/airflow.systemtype.yaml`](types/airflow.systemtype.yaml) | Platform only: scheduler/triggerer/DAG-processor heartbeats, DAG import errors, pool starvation, executor saturation, blocked triggerer. Per-DAG checks belong on integrations - see the file header |
 | WSO2 API Manager | [`types/wso2-apim.systemtype.yaml`](types/wso2-apim.systemtype.yaml) | Failed invocations, gateway latency, dead-man, error logs, JVM heap |
 
